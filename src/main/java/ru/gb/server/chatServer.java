@@ -21,11 +21,12 @@ class ChatServer {
             while (true) {
                 System.out.println("Wait client connection...");
                 final Socket socket = serverSocket.accept();
-                new ClientHandler(socket, this);
                 System.out.println("Client connected");
+                new ClientHandler(socket, this);
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("Error from server");
         }
     }
 

@@ -14,6 +14,7 @@ public class ClientHandler {
     private final DataInputStream in;
     private final DataOutputStream out;
     private String nick;
+    private boolean isAuthClient = false;
 
     public ClientHandler(Socket socket, ChatServer server) {
         try {
@@ -22,15 +23,35 @@ public class ClientHandler {
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
+            final int timeout = 12 * 1000;
 
-            new Thread(() -> {
+            Thread timer = new Thread(() -> {                                           // run timeout
+             try {
+                 Thread.sleep(timeout);
+             }catch (InterruptedException e) {
+                 e.printStackTrace();
+             }
+             try {
+                 if (!isAuthClient) {
+                     sendMessage("Time " + (timeout / 1000) + "second is over. This client disconnected from server!");
+                     socket.close();
+                     System.out.println("Timeout " + (timeout / 1000) + "second is over. Client disconnected from server!");
+                 }
+             }catch (IOException e) {
+                 e.printStackTrace();
+             }
+            });
+            timer.start();
+
+            Thread auth = new Thread(() -> {
                 try {
                     authenticate();
                     readMessages();
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            });
+            auth.start();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -81,6 +102,7 @@ public class ClientHandler {
                         this.nick = nick;
                         server.broadcast("Пользователь " + nick + " зашел в чат");
                         server.subscribe(this);
+                        isAuthClient = true;                            // timeout
                         break;
                     } else {
                         sendMessage("Неверные логин и пароль");
