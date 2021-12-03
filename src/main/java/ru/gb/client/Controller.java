@@ -1,6 +1,4 @@
-package ru.gb.client ;
-
-import java.util.List;
+package ru.gb.client;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,6 +8,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+
+import java.util.List;
 
 public class Controller {
 
@@ -35,7 +35,7 @@ public class Controller {
         client.openConnection();
     }
 
-    public void btnSendClick(ActionEvent event) {
+    public void btnSendClick(ActionEvent ignoredEvent) {
         final String message = textField.getText().trim();
         if (message.isEmpty()) {
             return;

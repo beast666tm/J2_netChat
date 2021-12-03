@@ -14,6 +14,7 @@ public class ClientHandler {
     private final DataInputStream in;
     private final DataOutputStream out;
     private String nick;
+    private boolean isAuthClient = false;
 
     public ClientHandler(Socket socket, ChatServer server) {
         try {
@@ -22,15 +23,28 @@ public class ClientHandler {
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
+            final int timeout = 120 * 1000;
 
-            new Thread(() -> {
+            Thread timer = new Thread(() -> {                                           // run timeout
                 try {
-                    authenticate();
-                    readMessages();
-                } finally {
-                    closeConnection();
+                    Thread.sleep(timeout);
+                }catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            }).start();
+                try {
+                    if (!isAuthClient) {
+                        sendMessage("Time " + (timeout / 1000) + " second is over. This client disconnected from server!");
+                        socket.close();
+                        System.out.println("Timeout " + (timeout / 1000) + " second is over. Client disconnected from server!");
+                    }
+                }catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            timer.start();
+
+            Thread auth = new Thread(this::run);
+            auth.start();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -71,17 +85,19 @@ public class ClientHandler {
                     final String[] split = str.split(" ");
                     final String login = split[1];
                     final String password = split[2];
-                    final String nick = server.getAuthService().getNickByLoginAndPassword(login, password);
-                    if (nick != null) {
+                    final String nick;
+                    nick = server.getAuthService().getNickByLoginAndPassword(login, password);
+                    if (nick != null ) {
                         if (server.isNickBusy(nick)) {
                             sendMessage("Пользователь уже авторизован");
-                            continue;
+                        } else {
+                            sendMessage("/authok " + nick);
+                            this.nick = nick;
+                            server.broadcast("Пользователь " + nick + " зашел в чат");
+                            server.subscribe(this);
+                            isAuthClient = true;                            // timeout
+                            break;
                         }
-                        sendMessage("/authok " + nick);
-                        this.nick = nick;
-                        server.broadcast("Пользователь " + nick + " зашел в чат");
-                        server.subscribe(this);
-                        break;
                     } else {
                         sendMessage("Неверные логин и пароль");
                     }
@@ -127,5 +143,14 @@ public class ClientHandler {
 
     public String getNick() {
         return nick;
+    }
+
+    private void run() {
+        try {
+            authenticate();
+            readMessages();
+        } finally {
+            closeConnection();
+        }
     }
 }
