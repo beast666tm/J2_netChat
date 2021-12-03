@@ -7,7 +7,8 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 
-class ChatClient {
+public class ChatClient {
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;

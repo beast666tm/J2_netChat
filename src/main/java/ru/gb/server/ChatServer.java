@@ -3,17 +3,20 @@ package ru.gb.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Vector;
 
-class ChatServer {
+public class ChatServer {
 
+    private final Vector<ClientHandler> clients;
     private final AuthService authService;
-    private final Map<String, ClientHandler> clients;
+
+    public AuthService getAuthService() {
+        return authService;
+    }
 
     public ChatServer() {
-        this.authService = new SimpleAuthService();
-        this.clients = new HashMap<>();
+        clients = new Vector<>();
+        authService = new SimpleAuthService();
     }
 
     public void run() {
@@ -21,25 +24,30 @@ class ChatServer {
             while (true) {
                 System.out.println("Wait client connection...");
                 final Socket socket = serverSocket.accept();
-                System.out.println("Client connected");
                 new ClientHandler(socket, this);
+                System.out.println("Client connected");
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Error from server");
         }
     }
 
-    public AuthService getAuthService() {
-        return authService;
-    }
+
+//    public boolean isNickBusy(String nick) {
+//        return clients.equals(nick);
+//    }
 
     public boolean isNickBusy(String nick) {
-        return clients.containsKey(nick);
+        for (ClientHandler c : clients) {
+            if (c.getNick().equals(nick)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public void subscribe(ClientHandler client) {
-        clients.put(client.getNick(), client);
+    public void subscribe(ClientHandler ClientHandler) {
+        clients.add(ClientHandler);
         broadcastClientsList();
     }
 
@@ -49,25 +57,35 @@ class ChatServer {
     }
 
     public void sendMessageToClient(ClientHandler from, String nickTo, String msg) {
-        final ClientHandler client = clients.get(nickTo);
-        if (client != null) {
-            client.sendMessage("от " + from.getNick() + ": " + msg);
-            from.sendMessage("участнику " + nickTo + ": " + msg);
-            return;
+        if (from.getNick().equals(nickTo)){
+            from.sendMessage("от " + from.getNick() + ": " + msg);
+        return;
+        }
+        for (ClientHandler client : clients) {
+            if (client.getNick().equals(nickTo)) {
+                client.sendMessage("участнику " + nickTo + ": " + msg);
+                return;
+            }
         }
         from.sendMessage("Участника с ником " + nickTo + " нет в чат-комнате");
     }
 
     public void broadcastClientsList() {
-        StringBuilder clientsCommand = new StringBuilder("/clients ");
-        for (ClientHandler client : clients.values()) {
+        StringBuilder clientsCommand = new StringBuilder(clients.size());
+        clientsCommand.append("/clients: ");
+        for (ClientHandler client : clients) {
             clientsCommand.append(client.getNick()).append(" ");
         }
+        clientsCommand.setLength(clientsCommand.length() - 1);
         broadcast(clientsCommand.toString());
+        String out = clientsCommand.toString();
+        for (ClientHandler clientHandler : clients) {
+            clientHandler.sendMessage(out);
+        }
     }
 
     public void broadcast(String msg) {
-        for (ClientHandler client : clients.values()) {
+        for (ClientHandler client : clients) {
             client.sendMessage(msg);
         }
     }

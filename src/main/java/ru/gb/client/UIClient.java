@@ -10,8 +10,8 @@ public class UIClient extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
-        primaryStage.setTitle("Simple chat client");
+        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("sample.fxml"));
+        primaryStage.setTitle("NetChat");
         primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.show();
     }

@@ -8,7 +8,7 @@ class JdbcApp {
     private static Connection connection;
     private static Statement statement;
     private static PreparedStatement getUserNicknameStatement;
-//    private static PreparedStatement createUserStatement;
+    private static PreparedStatement createUserStatement;
 
     synchronized static void connect() {
         try {
@@ -36,11 +36,11 @@ class JdbcApp {
     }
 
     public static void prepareAllStatement() throws SQLException {
-//        createUserStatement = connection.prepareStatement("INSERT INTO users (login, password, nick) VALUES (?, ?, ?);");
+        createUserStatement = connection.prepareStatement("INSERT INTO users (login, password, nick) VALUES (?, ?, ?);"); // метод на будующее для регистрации
         getUserNicknameStatement = connection.prepareStatement("select nick from users where login = ? and password = ?;");
     }
 
-    static void infoUsers() throws SQLException {
+    static void infoUsers() throws SQLException {  // метод выводит просто информацию для меня на чат никак не влияет
         final ResultSet rs = statement.executeQuery("select * from users");
         while (rs.next()) {
             final int ID = rs.getInt(1);
@@ -68,18 +68,6 @@ class JdbcApp {
         return nick;
     }
 
-    synchronized static String getNickname(String login, String password) {
-        String query = String.format("select nick from users where login = '%s' and password = '%s'",
-                login, password);
-
-        try (ResultSet set = statement.executeQuery(query)) {
-            if (set.next())
-                return set.getString(1);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
-    }
 
     synchronized static void disconnect() {
         try {
@@ -91,8 +79,18 @@ class JdbcApp {
         }
     }
 
-
-
+    public static boolean createUser(String nick, String login, String password) {
+        try {
+            createUserStatement.setString(1, nick);
+            createUserStatement.setString(2, login);
+            createUserStatement.setString(3, password);
+            createUserStatement.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+}
 
 
 //    static void select(int id) throws SQLException {
@@ -109,6 +107,3 @@ class JdbcApp {
 //            }
 //        }
 //    }
-
-
-}
