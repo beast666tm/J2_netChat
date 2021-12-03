@@ -1,13 +1,13 @@
 package ru.gb.client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class ChatClient {
+public class ChatClient {
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
@@ -28,11 +28,14 @@ class ChatClient {
                     while (true) {
                         final String msgAuth = in.readUTF();
                         if (msgAuth.startsWith("/authok")) {
+                            loadHistory();                                                 // new
                             final String[] split = msgAuth.split(" ");
                             final String nick = split[1];
                             controller.addMessage("Успешная авторизация под ником " + nick);
                             controller.setAuth(true);
                             break;
+                        }else {                                                             // new
+                            controller.addMessage("\n");                     // new
                         }
                     }
                     while (true) {
@@ -48,6 +51,9 @@ class ChatClient {
                                 final List<String> clients = Arrays.asList(tokens);
                                 controller.updateClientList(clients);
                             }
+                            }else {                                                         // new
+                            controller.getTextArea().appendText(message);                     // new
+                            SaveHistory();                                                  // new
                         }
                         controller.addMessage(message);
                     }
@@ -95,4 +101,47 @@ class ChatClient {
             e.printStackTrace();
         }
     }
+
+
+    private void SaveHistory() throws IOException {
+        try {
+            File history = new File("history.txt");
+            if (!history.exists()) {
+                System.out.println("Файла истории нет,создадим его");
+                history.createNewFile();
+            }
+            PrintWriter fileWriter = new PrintWriter(new FileWriter(history, false));
+
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            bufferedWriter.write(controller.getTextArea().getText());
+            bufferedWriter.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadHistory() throws IOException {
+        int posHistory = 100;
+        File history = new File("C:\\Users\\Beast\\IdeaProjects\\Java3\\NetChat\\history.txt");
+        List<String> historyList = new ArrayList<>();
+        FileInputStream in = new FileInputStream(history);
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+
+        String temp;
+        while ((temp = bufferedReader.readLine()) != null) {
+            historyList.add(temp);
+        }
+
+        if (historyList.size() > posHistory) {
+            for (int i = historyList.size() - posHistory; i <= (historyList.size() - 1); i++) {
+                controller.getTextArea().appendText(historyList.get(i) + "\n");
+            }
+        } else {
+            for (int i = 0; i < posHistory; i++) {
+                System.out.println(historyList.get(i));
+            }
+        }
+    }
+
 }

@@ -40,7 +40,7 @@ class JdbcApp {
         getUserNicknameStatement = connection.prepareStatement("select nick from users where login = ? and password = ?;");
     }
 
-    static void infoUsers() throws SQLException {  // метод выводит просто информацию для меня на чат никак не влияет
+    static void infoUsers() throws SQLException {                                                                           // метод выводит просто информацию для меня на чат никак не влияет
         final ResultSet rs = statement.executeQuery("select * from users");
         while (rs.next()) {
             final int ID = rs.getInt(1);

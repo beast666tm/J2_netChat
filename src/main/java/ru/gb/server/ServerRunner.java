@@ -2,7 +2,6 @@ package ru.gb.server;
 
 public class ServerRunner {
     public static void main(String[] args) {
-
         try {
             JdbcApp.connect();  // подключение к users.db
             JdbcApp.prepareAllStatement();

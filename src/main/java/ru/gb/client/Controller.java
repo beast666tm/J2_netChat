@@ -25,8 +25,18 @@ public class Controller {
     private HBox loginBox;
     @FXML
     private TextField textField;
+
     @FXML
     private TextArea textArea;
+
+    public TextArea getTextArea() {
+        return textArea;
+    }
+
+    public void setTextArea(String s) {
+        this.textArea = textArea;
+        return;
+    }
 
     private final ChatClient client;
 
@@ -72,4 +82,5 @@ public class Controller {
         clientList.getItems().clear();
         clientList.getItems().addAll(clients);
     }
+
 }
